@@ -227,6 +227,9 @@ fun ServerScreen(
             ) {
                 UrlRow(label = "HTTP", hint = "Browser", url = httpUrl, accent = true)
                 UrlRow(label = "FTP", hint = "FTP client · port ${server.ftpPort}", url = ftpUrl, accent = false)
+                if (server.username.isNotEmpty()) {
+                    UrlRow(label = "USER", hint = "FTP username", url = server.username, accent = false)
+                }
                 if (server.password.isNotEmpty()) {
                     UrlRow(label = "PWD", hint = "FTP password — enter in FileZilla", url = server.password, accent = false)
                 }

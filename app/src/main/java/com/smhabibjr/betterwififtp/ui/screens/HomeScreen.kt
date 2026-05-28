@@ -20,11 +20,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.FolderOpen
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Icon
@@ -39,6 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -68,9 +73,14 @@ fun HomeScreen(
     folder: String,
     mode: AccessMode,
     volumes: List<VolumeInfo>,
+    ftpUsername: String,
+    ftpPassword: String,
     onToggleWifi: () -> Unit,
     onSetFolder: (String) -> Unit,
     onSetMode: (AccessMode) -> Unit,
+    onSetUsername: (String) -> Unit,
+    onSetPassword: (String) -> Unit,
+    onGeneratePassword: () -> Unit,
     onStartServer: () -> Unit,
     onSimulate: () -> Unit,
 ) {
@@ -200,6 +210,94 @@ fun HomeScreen(
         SectionLabel("Access mode")
         ModeSelector(mode = mode, onChange = onSetMode)
 
+        // ── Security (credentials) ────────────────────────────────
+        SectionLabel("Security")
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(AppCard, RoundedCornerShape(18.dp))
+                .border(1.dp, AppBorder, RoundedCornerShape(18.dp))
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+        ) {
+            // Username row
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .background(AppAccentSoft, RoundedCornerShape(11.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.Person, null, tint = AppAccent2, modifier = Modifier.size(18.dp))
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Username", color = AppTextFaint, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp)
+                    BasicTextField(
+                        value = ftpUsername,
+                        onValueChange = onSetUsername,
+                        singleLine = true,
+                        textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = AppText),
+                        cursorBrush = SolidColor(AppAccent2),
+                        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                    )
+                }
+            }
+
+            // Divider
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppBorder))
+
+            // Password row
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .background(AppAccentSoft, RoundedCornerShape(11.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.Lock, null, tint = AppAccent2, modifier = Modifier.size(18.dp))
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Password", color = AppTextFaint, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp)
+                    BasicTextField(
+                        value = ftpPassword,
+                        onValueChange = onSetPassword,
+                        singleLine = true,
+                        textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = AppText),
+                        cursorBrush = SolidColor(AppAccent2),
+                        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .border(1.dp, AppBorderStrong, CircleShape)
+                        .clip(CircleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onGeneratePassword,
+                        )
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                ) {
+                    Text("Generate", color = AppTextDim, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                }
+            }
+
+            Text(
+                "Credentials saved automatically",
+                color = AppTextFaint,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+        }
+
         // ── Settings preview row ──────────────────────────────────
         Row(
             modifier = Modifier
@@ -212,7 +310,7 @@ fun HomeScreen(
         ) {
             SettingsCell("Protocol", "FTP + HTTP", modifier = Modifier.weight(1f))
             Box(modifier = Modifier.width(1.dp).height(32.dp).background(AppBorder))
-            SettingsCell("Port", "21", modifier = Modifier.weight(1f))
+            SettingsCell("Port", "2121", modifier = Modifier.weight(1f))
             Box(modifier = Modifier.width(1.dp).height(32.dp).background(AppBorder))
             SettingsCell(
                 label = "Mode",

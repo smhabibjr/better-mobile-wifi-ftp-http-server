@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.content.edit
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -58,12 +59,31 @@ data class ServerState(
     val clients: Int = 0,
     val ftpPort: Int = 2121,
     val httpPort: Int = 8080,
+    val username: String = "",
     val password: String = "",
 )
 
 private fun generateFtpPassword(): String {
     val chars = "abcdefghjkmnpqrstuvwxyz23456789"
     return (1..6).map { chars.random() }.joinToString("")
+}
+
+private const val PREFS_NAME = "ftp_creds"
+private const val KEY_USER = "ftp_username"
+private const val KEY_PASS = "ftp_password"
+
+private fun loadCreds(ctx: Context): Pair<String, String> {
+    val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val user = prefs.getString(KEY_USER, null) ?: "user"
+    val pass = prefs.getString(KEY_PASS, null) ?: generateFtpPassword().also { generated ->
+        prefs.edit { putString(KEY_PASS, generated) }
+    }
+    return user to pass
+}
+
+private fun saveCreds(ctx: Context, user: String, pass: String) {
+    ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit { putString(KEY_USER, user); putString(KEY_PASS, pass) }
 }
 
 data class BannerData(val tone: String, val title: String, val message: String)
@@ -124,6 +144,14 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
     var volumes by remember { mutableStateOf<List<VolumeInfo>>(emptyList()) }
     var httpServer by remember { mutableStateOf<FileHttpServer?>(null) }
     var ftpServer by remember { mutableStateOf<FtpServer?>(null) }
+    var ftpUsername by remember { mutableStateOf("") }
+    var ftpPassword by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        val (u, p) = withContext(Dispatchers.IO) { loadCreds(context) }
+        ftpUsername = u
+        ftpPassword = p
+    }
 
     // Poll real WiFi info every 5 seconds
     LaunchedEffect(Unit) {
@@ -156,12 +184,11 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
             val httpPort = http.start(8080)
             httpServer = http
 
-            val pwd = generateFtpPassword()
-            val ftp = FtpServer(path, !writable, ip, pwd)
+            val ftp = FtpServer(path, !writable, ip, username = ftpUsername, password = ftpPassword)
             val ftpPort = ftp.start(2121)
             ftpServer = ftp
 
-            server = server.copy(httpPort = httpPort, ftpPort = ftpPort, password = pwd)
+            server = server.copy(httpPort = httpPort, ftpPort = ftpPort, username = ftpUsername, password = ftpPassword)
         } else {
             httpServer?.stop(); httpServer = null
             ftpServer?.stop(); ftpServer = null
@@ -215,9 +242,18 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
                     folder = folder,
                     mode = mode,
                     volumes = volumes,
+                    ftpUsername = ftpUsername,
+                    ftpPassword = ftpPassword,
                     onToggleWifi = { wifi = wifi.copy(connected = !wifi.connected) },
                     onSetFolder = { folder = it },
                     onSetMode = { mode = it },
+                    onSetUsername = { ftpUsername = it; saveCreds(context, it, ftpPassword) },
+                    onSetPassword = { ftpPassword = it; saveCreds(context, ftpUsername, it) },
+                    onGeneratePassword = {
+                        val p = generateFtpPassword()
+                        ftpPassword = p
+                        saveCreds(context, ftpUsername, p)
+                    },
                     onStartServer = { server = ServerState(); screen = Screen.Server },
                     onSimulate = { showSimSheet = true },
                 )

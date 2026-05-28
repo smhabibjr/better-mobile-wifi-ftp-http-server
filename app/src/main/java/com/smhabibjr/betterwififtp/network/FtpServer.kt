@@ -23,6 +23,7 @@ class FtpServer(
     private val rootPath: String,
     private val readOnly: Boolean,
     private val serverIp: String,
+    private val username: String = "",
     private val password: String = "",
 ) {
     private val _activeClients = MutableStateFlow(0)
@@ -63,6 +64,7 @@ class FtpServer(
                 var cwd = File(rootPath).canonicalFile
                 var dataServerSocket: ServerSocket? = null
                 var renameFrom: File? = null
+                var pendingUser = ""
                 var loggedIn = false
 
                 fun send(code: Int, msg: String) = w.println("$code $msg")
@@ -109,9 +111,11 @@ class FtpServer(
 
                     when (upperCmd) {
                         // ── Pre-auth commands (always allowed) ────────────
-                        "USER" -> send(331, "Password required")
+                        "USER" -> { pendingUser = arg; send(331, "Password required") }
                         "PASS" -> {
-                            if (password.isEmpty() || arg == password) {
+                            val userOk = username.isEmpty() || pendingUser == username
+                            val passOk = password.isEmpty() || arg == password
+                            if (userOk && passOk) {
                                 loggedIn = true
                                 send(230, "User logged in")
                             } else {
