@@ -23,20 +23,21 @@ class FileHttpServer(private val rootPath: String, private val readOnly: Boolean
     private var serverSocket: ServerSocket? = null
     private var scope: CoroutineScope? = null
 
-    /** Starts the server. Tries [preferredPort] then 8181. Returns the actual port used. */
-    suspend fun start(preferredPort: Int = 8080): Int = withContext(Dispatchers.IO) {
+    /** Starts the server. Tries [preferredPort] then 8889. Returns the actual port used. */
+    suspend fun start(preferredPort: Int = 8888): Int = withContext(Dispatchers.IO) {
         val ss = try {
             ServerSocket(preferredPort)
         } catch (_: Exception) {
-            ServerSocket(8181)
+            ServerSocket(8889)
         }
         serverSocket = ss
         val actualPort = ss.localPort
-        scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-        scope!!.launch {
+        val s = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        scope = s
+        s.launch {
             while (!ss.isClosed) {
                 val client = try { ss.accept() } catch (_: Exception) { break }
-                launch { handleClient(client) }
+                s.launch { handleClient(client) }  // child of scope, not of accept-loop coroutine
             }
         }
         actualPort

@@ -36,11 +36,12 @@ class FtpServer(
     suspend fun start(preferredPort: Int = 2121): Int = withContext(Dispatchers.IO) {
         val ss = try { ServerSocket(preferredPort) } catch (_: Exception) { ServerSocket(2122) }
         serverSocket = ss
-        scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-        scope!!.launch {
+        val s = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        scope = s
+        s.launch {
             while (!ss.isClosed) {
                 val client = try { ss.accept() } catch (_: Exception) { break }
-                launch { handleSession(client) }
+                s.launch { handleSession(client) }  // child of scope, not of accept-loop coroutine
             }
         }
         ss.localPort

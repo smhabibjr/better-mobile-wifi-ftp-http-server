@@ -58,7 +58,7 @@ data class WifiState(val connected: Boolean, val ssid: String, val ip: String)
 data class ServerState(
     val clients: Int = 0,
     val ftpPort: Int = 2121,
-    val httpPort: Int = 8080,
+    val httpPort: Int = 8888,
     val username: String = "",
     val password: String = "",
 )
@@ -181,7 +181,7 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
             val ip = wifi.ip
 
             val http = FileHttpServer(path, writable)
-            val httpPort = http.start(8080)
+            val httpPort = http.start(8888)
             httpServer = http
 
             val ftp = FtpServer(path, !writable, ip, username = ftpUsername, password = ftpPassword)

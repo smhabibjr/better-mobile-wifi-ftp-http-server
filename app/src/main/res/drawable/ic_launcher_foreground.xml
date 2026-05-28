@@ -1,30 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
+
+    <!-- =============================================
+         WiFi arcs (cyan color)
+         Center of icon: 54, 54
+         WiFi arcs drawn above center
+    ============================================= -->
+
+    <!-- WiFi arc - outer (largest) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+        android:fillColor="#00000000"
+        android:strokeColor="#00BCD4"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M22,42 Q54,14 86,42" />
+
+    <!-- WiFi arc - middle -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#00BCD4"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M32,52 Q54,30 76,52" />
+
+    <!-- WiFi arc - inner (smallest) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#00BCD4"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M42,62 Q54,50 66,62" />
+
+    <!-- WiFi dot (center point) -->
+    <path
+        android:fillColor="#00BCD4"
+        android:pathData="M54,70 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+
+    <!-- =============================================
+         FTP Folder icon (blue) below wifi dot
+    ============================================= -->
+
+    <!-- Folder tab (top-left notch) -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M30,78 L30,76 Q30,74 32,74 L46,74 Q48,74 49,76 L50,78 Z" />
+
+    <!-- Folder body -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M28,78 Q26,78 26,80 L26,96 Q26,98 28,98 L80,98 Q82,98 82,96 L82,80 Q82,78 80,78 Z" />
+
+    <!-- FTP label lines inside folder (representing files) -->
+    <!-- Top line (file 1) -->
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M34,84 L52,84 Q54,84 54,86 L54,87 Q54,88 52,88 L34,88 Q32,88 32,87 L32,86 Q32,84 34,84 Z" />
+
+    <!-- Bottom line (file 2) -->
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M34,92 L62,92 Q64,92 64,93.5 L64,94.5 Q64,96 62,96 L34,96 Q32,96 32,94.5 L32,93.5 Q32,92 34,92 Z" />
+
+    <!-- Small arrow icon on folder (upload/transfer indicator) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M70,82 L70,94 M65,87 L70,82 L75,87"
+        android:strokeColor="#00BCD4"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
 </vector>
