@@ -15,7 +15,12 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.URLDecoder
 
-class FileHttpServer(private val rootPath: String, private val readOnly: Boolean) {
+class FileHttpServer(
+    private val rootPath: String,
+    private val readOnly: Boolean,
+    private val username: String = "",
+    private val password: String = "",
+) {
 
     private val _activeClients = MutableStateFlow(0)
     val activeClients: StateFlow<Int> = _activeClients
@@ -71,6 +76,12 @@ class FileHttpServer(private val rootPath: String, private val readOnly: Boolean
                         headers[line!!.substring(0, colonIdx).trim().lowercase()] =
                             line!!.substring(colonIdx + 1).trim()
                     }
+                }
+
+                if (!isAuthorized(headers)) {
+                    s.getOutputStream().write(response401())
+                    s.getOutputStream().flush()
+                    return@use
                 }
 
                 val decodedPath = URLDecoder.decode(rawPath.substringBefore('?'), "UTF-8")
@@ -191,6 +202,29 @@ class FileHttpServer(private val rootPath: String, private val readOnly: Boolean
             socket.getOutputStream().write(response.toByteArray())
         } catch (_: Exception) {}
     }
+
+    private fun isAuthorized(headers: Map<String, String>): Boolean {
+        if (username.isEmpty() && password.isEmpty()) return true
+        val authHeader = headers["authorization"] ?: return false
+        if (!authHeader.startsWith("Basic ")) return false
+        val decoded = try {
+            String(
+                android.util.Base64.decode(authHeader.removePrefix("Basic ").trim(), android.util.Base64.DEFAULT),
+                Charsets.UTF_8,
+            )
+        } catch (_: Exception) { return false }
+        val colonIdx = decoded.indexOf(':')
+        if (colonIdx < 0) return false
+        val suppliedUser = decoded.substring(0, colonIdx)
+        val suppliedPass = decoded.substring(colonIdx + 1)
+        val userOk = username.isEmpty() || suppliedUser == username
+        val passOk = password.isEmpty() || suppliedPass == password
+        return userOk && passOk
+    }
+
+    private fun response401() =
+        "HTTP/1.0 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"BetterWiFiFTP\"\r\nContent-Length: 0\r\n\r\n"
+            .toByteArray()
 
     private fun response403() =
         "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nForbidden".toByteArray()

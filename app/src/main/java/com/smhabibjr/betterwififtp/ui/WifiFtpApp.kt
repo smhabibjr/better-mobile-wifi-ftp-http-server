@@ -180,7 +180,7 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
             val writable = mode == AccessMode.ReadWrite
             val ip = wifi.ip
 
-            val http = FileHttpServer(path, writable)
+            val http = FileHttpServer(path, writable, ftpUsername, ftpPassword)
             val httpPort = http.start(8888)
             httpServer = http
 
