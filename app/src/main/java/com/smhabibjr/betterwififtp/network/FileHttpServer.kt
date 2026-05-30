@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.URLDecoder
@@ -42,7 +42,7 @@ class FileHttpServer(
         s.launch {
             while (!ss.isClosed) {
                 val client = try { ss.accept() } catch (_: Exception) { break }
-                s.launch { handleClient(client) }  // child of scope, not of accept-loop coroutine
+                s.launch { handleClient(client) }
             }
         }
         actualPort
@@ -60,8 +60,25 @@ class FileHttpServer(
         _activeClients.value++
         try {
             socket.use { s ->
-                val reader = BufferedReader(InputStreamReader(s.getInputStream()))
-                val requestLine = reader.readLine() ?: return@use
+                // Use BufferedInputStream so headers and body share one stream — no byte-stealing.
+                val inStream = s.getInputStream().buffered()
+
+                fun readLine(): String? {
+                    val sb = StringBuilder()
+                    var prev = -1
+                    while (true) {
+                        val b = inStream.read()
+                        if (b < 0) return if (sb.isEmpty()) null else sb.toString()
+                        if (b == '\n'.code) {
+                            if (prev == '\r'.code && sb.isNotEmpty()) sb.deleteCharAt(sb.length - 1)
+                            return sb.toString()
+                        }
+                        sb.append(b.toChar())
+                        prev = b
+                    }
+                }
+
+                val requestLine = readLine() ?: return@use
                 val parts = requestLine.split(" ")
                 if (parts.size < 2) return@use
                 val method = parts[0]
@@ -69,12 +86,13 @@ class FileHttpServer(
 
                 // Drain headers
                 val headers = mutableMapOf<String, String>()
-                var line: String?
-                while (reader.readLine().also { line = it } != null && line!!.isNotEmpty()) {
-                    val colonIdx = line!!.indexOf(':')
+                while (true) {
+                    val line = readLine() ?: break
+                    if (line.isEmpty()) break
+                    val colonIdx = line.indexOf(':')
                     if (colonIdx > 0) {
-                        headers[line!!.substring(0, colonIdx).trim().lowercase()] =
-                            line!!.substring(colonIdx + 1).trim()
+                        headers[line.substring(0, colonIdx).trim().lowercase()] =
+                            line.substring(colonIdx + 1).trim()
                     }
                 }
 
@@ -96,7 +114,11 @@ class FileHttpServer(
                 val out = s.getOutputStream()
 
                 if (method == "POST" && !readOnly && file.isDirectory) {
-                    handleUpload(reader, headers, file, s)
+                    if (rawPath.contains("?mkdir")) {
+                        handleMkdir(headers, file, decodedPath, s, inStream)
+                    } else {
+                        handleUpload(headers, file, s, decodedPath, inStream)
+                    }
                     return@use
                 }
 
@@ -134,6 +156,7 @@ class FileHttpServer(
         sb.append(".meta{color:#64748B;font-size:12px;margin-left:auto}")
         sb.append("form{margin-top:24px;padding:16px;border-radius:12px;background:#141C32;border:1px solid rgba(148,163,184,0.12)}")
         sb.append("input[type=file]{color:#94A3B8;margin-bottom:12px;display:block}")
+        sb.append("input[type=text]{background:#0B1220;border:1px solid rgba(148,163,184,0.2);color:#E2E8F0;padding:8px 12px;border-radius:8px;margin-bottom:12px;display:block;width:100%;box-sizing:border-box}")
         sb.append("button{background:#06B6D4;color:#031018;border:none;padding:9px 20px;border-radius:8px;font-weight:600;cursor:pointer}")
         sb.append("</style></head><body>")
         sb.append("<h1>📂 ${dir.name}</h1>")
@@ -144,7 +167,7 @@ class FileHttpServer(
 
         for (entry in entries) {
             val icon = if (entry.isDirectory) "🗂" else "📄"
-            val href = (if (parent == "/") "" else parent) + "/" + entry.name
+            val href = (if (parent.isEmpty()) "" else parent) + "/" + entry.name
             val meta = if (entry.isFile) formatSize(entry.length()) else ""
             sb.append("<a href='$href'>$icon ${entry.name}<span class='meta'>$meta</span></a>")
         }
@@ -155,6 +178,11 @@ class FileHttpServer(
             sb.append("<p style='color:#94A3B8;margin:0 0 10px;font-size:13px'>Upload file</p>")
             sb.append("<input type='file' name='file'><button type='submit'>Upload</button>")
             sb.append("</form>")
+            sb.append("<form method='POST' action='$action?mkdir' enctype='application/x-www-form-urlencoded'>")
+            sb.append("<p style='color:#94A3B8;margin:0 0 10px;font-size:13px'>Create folder</p>")
+            sb.append("<input type='text' name='name' placeholder='Folder name' required>")
+            sb.append("<button type='submit'>Create</button>")
+            sb.append("</form>")
         }
 
         sb.append("</body></html>")
@@ -164,42 +192,104 @@ class FileHttpServer(
     }
 
     private fun handleUpload(
-        reader: BufferedReader,
         headers: Map<String, String>,
         dir: File,
         socket: Socket,
+        currentUrlPath: String = "/",
+        inStream: InputStream,
     ) {
         try {
-            val contentLength = headers["content-length"]?.toLongOrNull() ?: return
             val contentType = headers["content-type"] ?: return
-            val boundary = contentType.substringAfter("boundary=", "").trim()
+            val boundary = contentType.split(";")
+                .firstOrNull { it.trim().startsWith("boundary=") }
+                ?.substringAfter("boundary=")?.trim() ?: return
             if (boundary.isEmpty()) return
 
-            val raw = ByteArray(contentLength.toInt())
-            val inStream = socket.getInputStream()
-            var read = 0
-            while (read < raw.size) {
-                val r = inStream.read(raw, read, raw.size - read)
-                if (r < 0) break
-                read += r
+            // Skip opening --boundary line
+            readStreamLine(inStream) ?: return
+
+            // Read part headers, extract filename
+            var filename = "upload"
+            while (true) {
+                val line = readStreamLine(inStream) ?: return
+                if (line.isEmpty()) break
+                if (line.lowercase().startsWith("content-disposition:"))
+                    Regex("filename=\"([^\"]+)\"").find(line)?.let { filename = it.groupValues[1] }
             }
 
-            val body = String(raw, Charsets.ISO_8859_1)
-            val dispMarker = "Content-Disposition: form-data;"
-            val dispIdx = body.indexOf(dispMarker)
-            if (dispIdx < 0) return
-            val dispLine = body.substring(dispIdx, body.indexOf('\n', dispIdx))
-            val filenameMatch = Regex("filename=\"([^\"]+)\"").find(dispLine)
-            val filename = filenameMatch?.groupValues?.get(1) ?: "upload"
-            val headerEnd = body.indexOf("\r\n\r\n", dispIdx) + 4
-            val endBoundary = "\r\n--$boundary"
-            val fileEnd = body.indexOf(endBoundary, headerEnd)
-            if (fileEnd < 0) return
-            val fileBytes = raw.copyOfRange(headerEnd, fileEnd)
-            File(dir, filename).writeBytes(fileBytes)
+            // Stream directly to disk — no full-file memory allocation
+            val endMarker = "\r\n--$boundary".toByteArray(Charsets.ISO_8859_1)
+            File(dir, filename).outputStream().buffered().use { fos ->
+                streamUntilBoundary(inStream, fos, endMarker)
+            }
 
-            val response = "HTTP/1.0 303 See Other\r\nLocation: /\r\n\r\n"
-            socket.getOutputStream().write(response.toByteArray())
+            val location = currentUrlPath.ifEmpty { "/" }
+            socket.getOutputStream().write("HTTP/1.0 303 See Other\r\nLocation: $location\r\n\r\n".toByteArray())
+        } catch (_: Exception) {}
+    }
+
+    private fun readStreamLine(inStream: InputStream): String? {
+        val sb = StringBuilder()
+        while (true) {
+            val b = inStream.read()
+            if (b < 0) return if (sb.isEmpty()) null else sb.toString()
+            if (b == '\n'.code) {
+                if (sb.endsWith('\r')) sb.deleteCharAt(sb.length - 1)
+                return sb.toString()
+            }
+            sb.append(b.toChar())
+        }
+    }
+
+    private fun streamUntilBoundary(inStream: InputStream, out: OutputStream, endMarker: ByteArray) {
+        val window = ByteArray(endMarker.size)
+        var filled = 0
+        // Pre-fill sliding window
+        while (filled < endMarker.size) {
+            val b = inStream.read()
+            if (b < 0) { out.write(window, 0, filled); return }
+            window[filled++] = b.toByte()
+        }
+        val writeBuf = ByteArray(8192)
+        var wPos = 0
+        fun flush() { if (wPos > 0) { out.write(writeBuf, 0, wPos); wPos = 0 } }
+        while (true) {
+            if (window.contentEquals(endMarker)) break
+            writeBuf[wPos++] = window[0]
+            if (wPos == writeBuf.size) flush()
+            System.arraycopy(window, 1, window, 0, endMarker.size - 1)
+            val b = inStream.read()
+            if (b < 0) { flush(); out.write(window, 0, endMarker.size - 1); return }
+            window[endMarker.size - 1] = b.toByte()
+        }
+        flush()
+    }
+
+    private fun handleMkdir(
+        headers: Map<String, String>,
+        dir: File,
+        currentUrlPath: String,
+        socket: Socket,
+        inStream: InputStream,
+    ) {
+        try {
+            val contentLength = headers["content-length"]?.toIntOrNull() ?: 0
+            val raw = if (contentLength > 0) {
+                val buf = ByteArray(contentLength)
+                inStream.read(buf, 0, contentLength)
+                String(buf, Charsets.UTF_8)
+            } else ""
+            val name = raw.split("&")
+                .firstOrNull { it.startsWith("name=") }
+                ?.removePrefix("name=")
+                ?.let { URLDecoder.decode(it, "UTF-8") }
+                ?.trim()
+                ?.replace(Regex("[/\\\\]"), "")
+            if (!name.isNullOrEmpty()) {
+                File(dir, name).mkdirs()
+            }
+            val location = currentUrlPath.ifEmpty { "/" }
+            socket.getOutputStream().write("HTTP/1.0 303 See Other\r\nLocation: $location\r\n\r\n".toByteArray())
         } catch (_: Exception) {}
     }
 

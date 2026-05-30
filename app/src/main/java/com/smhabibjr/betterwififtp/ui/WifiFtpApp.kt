@@ -33,8 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.smhabibjr.betterwififtp.network.FileHttpServer
-import com.smhabibjr.betterwififtp.network.FtpServer
+import com.smhabibjr.betterwififtp.network.FileServerService
+import com.smhabibjr.betterwififtp.network.ServerRegistry
 import com.smhabibjr.betterwififtp.network.WifiInfoHelper
 import com.smhabibjr.betterwififtp.storage.StorageHelper
 import com.smhabibjr.betterwififtp.ui.components.BannerOverlay
@@ -46,6 +46,7 @@ import com.smhabibjr.betterwififtp.ui.screens.ServerScreen
 import com.smhabibjr.betterwififtp.ui.theme.AppBg
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 
 // ── App state models ──────────────────────────────────────────
@@ -107,26 +108,32 @@ data class VolumeInfo(
 fun WifiFtpApp(modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
-    // Runtime storage permissions — needed for File.listFiles() to return media files
+    // Runtime permissions
     val storagePermissions = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.READ_MEDIA_AUDIO,
-            )
-        } else {
-            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
+        buildList {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.READ_MEDIA_IMAGES)
+                add(Manifest.permission.READ_MEDIA_VIDEO)
+                add(Manifest.permission.READ_MEDIA_AUDIO)
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }.toTypedArray()
     }
-    fun allGranted() = storagePermissions.all {
+    fun allStorageGranted() = storagePermissions.filter {
+        it != Manifest.permission.POST_NOTIFICATIONS
+    }.all {
         ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
     }
-    var storageGranted by remember { mutableStateOf(allGranted()) }
+    var storageGranted by remember { mutableStateOf(allStorageGranted()) }
 
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { storageGranted = it.values.all { v -> v } }
+    ) { results ->
+        storageGranted = results.filter { it.key != Manifest.permission.POST_NOTIFICATIONS }
+            .values.all { it }
+    }
 
     LaunchedEffect(Unit) {
         if (!storageGranted) permLauncher.launch(storagePermissions)
@@ -136,14 +143,11 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
     var wifi by remember { mutableStateOf(WifiState(connected = false, ssid = "", ip = "")) }
     var folder by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf(AccessMode.ReadOnly) }
-    var server by remember { mutableStateOf(ServerState()) }
     var banner by remember { mutableStateOf<BannerData?>(null) }
     var toast by remember { mutableStateOf<ToastData?>(null) }
     var showPermModal by remember { mutableStateOf(false) }
     var showSimSheet by remember { mutableStateOf(false) }
     var volumes by remember { mutableStateOf<List<VolumeInfo>>(emptyList()) }
-    var httpServer by remember { mutableStateOf<FileHttpServer?>(null) }
-    var ftpServer by remember { mutableStateOf<FtpServer?>(null) }
     var ftpUsername by remember { mutableStateOf("") }
     var ftpPassword by remember { mutableStateOf("") }
 
@@ -173,36 +177,17 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
         }
     }
 
-    // Start/stop HTTP + FTP servers with screen
-    LaunchedEffect(screen) {
-        if (screen == Screen.Server) {
-            val path = folder
-            val writable = mode == AccessMode.ReadWrite
-            val ip = wifi.ip
-
-            val http = FileHttpServer(path, writable, ftpUsername, ftpPassword)
-            val httpPort = http.start(8888)
-            httpServer = http
-
-            val ftp = FtpServer(path, !writable, ip, username = ftpUsername, password = ftpPassword)
-            val ftpPort = ftp.start(2121)
-            ftpServer = ftp
-
-            server = server.copy(httpPort = httpPort, ftpPort = ftpPort, username = ftpUsername, password = ftpPassword)
-        } else {
-            httpServer?.stop(); httpServer = null
-            ftpServer?.stop(); ftpServer = null
-        }
+    // Collect server state from the foreground service via ServerRegistry
+    val serverState by produceState(ServerState()) {
+        combine(
+            ServerRegistry.ftpPort,
+            ServerRegistry.httpPort,
+            ServerRegistry.username,
+            ServerRegistry.password,
+            ServerRegistry.activeClients,
+        ) { fp, hp, u, p, c -> ServerState(c, fp, hp, u, p) }
+            .collect { value = it }
     }
-
-    // Collect real client count (HTTP + FTP combined)
-    val httpClients by produceState(0, httpServer) {
-        httpServer?.activeClients?.collect { value = it }
-    }
-    val ftpClients by produceState(0, ftpServer) {
-        ftpServer?.activeClients?.collect { value = it }
-    }
-    val activeClients = httpClients + ftpClients
 
     LaunchedEffect(banner) {
         banner ?: return@LaunchedEffect
@@ -214,12 +199,19 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
         delay(3500)
         toast = null
     }
-    // WiFi lost while server running → auto-stop + banner
+
+    // WiFi lost while server running → stop service + show banner
     LaunchedEffect(wifi.connected, screen) {
         if (screen == Screen.Server && !wifi.connected) {
             banner = BannerData("red", "WiFi Lost — Server Stopped", "Reconnect to a network to share files again.")
+            context.startService(FileServerService.stopIntent(context))
             screen = Screen.Home
         }
+    }
+
+    fun stopServer() {
+        context.startService(FileServerService.stopIntent(context))
+        screen = Screen.Home
     }
 
     Box(modifier = modifier.background(AppBg)) {
@@ -254,15 +246,24 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
                         ftpPassword = p
                         saveCreds(context, ftpUsername, p)
                     },
-                    onStartServer = { server = ServerState(); screen = Screen.Server },
+                    onStartServer = {
+                        screen = Screen.Server
+                        ContextCompat.startForegroundService(
+                            context,
+                            FileServerService.startIntent(
+                                context, folder, mode != AccessMode.ReadWrite,
+                                wifi.ip, ftpUsername, ftpPassword,
+                            ),
+                        )
+                    },
                     onSimulate = { showSimSheet = true },
                 )
                 Screen.Server -> ServerScreen(
                     wifi = wifi,
                     folder = folder,
                     mode = mode,
-                    server = server.copy(clients = activeClients),
-                    onStopServer = { screen = Screen.Home },
+                    server = serverState,
+                    onStopServer = { stopServer() },
                     onSimulate = { showSimSheet = true },
                 )
             }
@@ -301,10 +302,7 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
                     when (id) {
                         "wifiLost" -> if (wifi.connected) wifi = wifi.copy(connected = false)
                         "permission" -> showPermModal = true
-                        "portBusy" -> {
-                            server = server.copy(ftpPort = 2121)
-                            toast = ToastData("amber", "Port 21 busy — switching to 2121")
-                        }
+                        "portBusy" -> toast = ToastData("amber", "Port 21 busy — switching to 2121")
                         "toggleWifi" -> wifi = wifi.copy(connected = !wifi.connected)
                     }
                 },
