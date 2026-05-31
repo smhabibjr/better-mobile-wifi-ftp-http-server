@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy – BetterWiFiFTP</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.7;
+      padding: 0 16px 60px;
+    }
+    .container { max-width: 760px; margin: 0 auto; }
+    header {
+      background: #0B1220;
+      color: #22D3EE;
+      padding: 40px 24px 32px;
+      margin-bottom: 40px;
+      border-bottom: 3px solid #22D3EE;
+    }
+    header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+    header p  { color: #94A3B8; font-size: 14px; }
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 36px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    p  { margin-bottom: 14px; }
+    ul { margin: 10px 0 14px 22px; }
+    li { margin-bottom: 7px; }
+    .highlight {
+      background: #f0fdf4;
+      border-left: 4px solid #22c55e;
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin: 20px 0;
+      font-size: 15px;
+      color: #14532d;
+    }
+    .highlight strong { font-weight: 700; }
+    a { color: #0284c7; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 13px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <p>BetterWiFiFTP &nbsp;|&nbsp; Effective Date: May 31, 2026</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── INTRODUCTION ─────────────────────────────────── -->
+  <h2>1. Introduction</h2>
+  <p>
+    Welcome to <strong>BetterWiFiFTP</strong> ("the App"), developed by SM Habib Jr ("we", "us", or "our").
+    BetterWiFiFTP is a local Wi-Fi file-sharing application for Android. It turns your Android device into
+    an FTP server and an HTTP file server that other devices on the <em>same</em> Wi-Fi network can connect to.
+  </p>
+  <p>
+    This Privacy Policy explains what information the App accesses or stores, how it is used, and your rights
+    regarding that information. Please read it carefully.
+  </p>
+
+  <div class="highlight">
+    <strong>Short version:</strong> BetterWiFiFTP does not collect, transmit, or share any of your personal
+    data with us or any third party. All activity stays entirely on your local network and on your device.
+  </div>
+
+  <!-- ── INFORMATION WE COLLECT ───────────────────────── -->
+  <h2>2. Information the App Accesses or Stores</h2>
+  <p>
+    BetterWiFiFTP accesses only the information needed to operate a local file-sharing server. No information
+    is sent to any external server, and no analytics or tracking code is present in the App.
+  </p>
+
+  <h3 style="font-size:15px;font-weight:600;margin:18px 0 8px;">2a. Server Credentials (Stored Locally)</h3>
+  <p>
+    The App lets you set a username and password to protect access to your FTP/HTTP server. These credentials
+    are stored exclusively in <strong>Android SharedPreferences on your device</strong>. They are never uploaded,
+    transmitted to us, or shared with any third party. They exist solely to authenticate other devices on your
+    local network.
+  </p>
+
+  <h3 style="font-size:15px;font-weight:600;margin:18px 0 8px;">2b. Wi-Fi Network Information (Read-Only, Not Stored)</h3>
+  <p>
+    The App reads your device's local IP address and Wi-Fi network name (SSID) at runtime so it can display the
+    server address to you and configure passive-mode FTP connections. This information is <strong>displayed on-screen
+    only</strong> — it is never stored, logged, or transmitted outside your device.
+  </p>
+
+  <h3 style="font-size:15px;font-weight:600;margin:18px 0 8px;">2c. File System Access (User-Selected Folder Only)</h3>
+  <p>
+    The App reads your device's storage to serve files over FTP and HTTP. It accesses <strong>only the folder you
+    explicitly select</strong>. File names, sizes, and modification dates are used to generate directory listings
+    served to devices on your local network. The App does not read, copy, or transmit your files to any external
+    service.
+  </p>
+
+  <h3 style="font-size:15px;font-weight:600;margin:18px 0 8px;">2d. Data We Do NOT Collect</h3>
+  <ul>
+    <li>No name, email address, or contact information</li>
+    <li>No precise or approximate device location (GPS)</li>
+    <li>No contacts, calendar, or call logs</li>
+    <li>No device identifiers (advertising ID, IMEI, etc.)</li>
+    <li>No usage analytics or crash reports</li>
+    <li>No browsing history or app activity logs</li>
+    <li>No payment or financial information</li>
+  </ul>
+
+  <!-- ── HOW WE USE INFORMATION ──────────────────────── -->
+  <h2>3. How We Use the Information</h2>
+  <p>The limited information the App accesses is used solely for the following operational purposes:</p>
+  <ul>
+    <li>Displaying your device's local IP address and server port so you can connect from other devices</li>
+    <li>Configuring passive-mode FTP data connections using your local IP address</li>
+    <li>Authenticating connecting clients against the username and password you set</li>
+    <li>Serving the files in the folder you selected to authorized clients on your local network</li>
+    <li>Showing a foreground notification while the server is running (required by Android for background services)</li>
+  </ul>
+  <p>
+    None of these purposes involve transmitting data outside your device or local network.
+  </p>
+
+  <!-- ── LOCAL NETWORK COMMUNICATION ────────────────── -->
+  <h2>4. Local Network Communication</h2>
+  <p>
+    BetterWiFiFTP creates an FTP server (default port 2121) and an HTTP server (default port 8888) that listen
+    for incoming connections on your local Wi-Fi network. All data transfers (file listings, downloads, uploads)
+    occur <strong>only between devices on the same local network</strong>. The App does not make any outbound
+    connections to the internet on its own.
+  </p>
+  <p>
+    You are responsible for the security of your local network and for choosing who you share the server address
+    and credentials with.
+  </p>
+
+  <!-- ── THIRD-PARTY SERVICES ────────────────────────── -->
+  <h2>5. Third-Party Services and SDKs</h2>
+  <p>
+    BetterWiFiFTP uses <strong>no third-party analytics, advertising, crash-reporting, or tracking SDKs</strong>.
+    The only libraries used are:
+  </p>
+  <ul>
+    <li><strong>Jetpack Compose &amp; AndroidX</strong> (Google) — Android UI framework; these libraries run
+        entirely on-device and do not collect or transmit any data.</li>
+    <li><strong>Kotlin Coroutines</strong> (JetBrains) — concurrency library; runs entirely on-device.</li>
+  </ul>
+  <p>No data is shared with any third party.</p>
+
+  <!-- ── DATA STORAGE AND SECURITY ──────────────────── -->
+  <h2>6. Data Storage and Security</h2>
+  <p>
+    The only data the App persists is the FTP server username and password you configure, stored in
+    Android's SharedPreferences (private mode). This data is stored in the App's private sandbox on your device
+    and is not accessible to other apps.
+  </p>
+  <p>
+    Because the App operates entirely on your local network and stores no data on external servers, there is no
+    remote database or cloud storage to secure or breach. Your files never leave your local network unless you
+    intentionally transfer them using the App.
+  </p>
+  <p>
+    We recommend setting a strong username and password in the App and only running the server when you are on
+    a trusted private network.
+  </p>
+
+  <!-- ── PERMISSIONS ─────────────────────────────────── -->
+  <h2>7. Android Permissions Explained</h2>
+  <p>The App requests the following permissions, each used strictly as described:</p>
+  <ul>
+    <li>
+      <strong>INTERNET</strong> — Required to open server sockets so other devices can connect to
+      the FTP and HTTP servers running on your device.
+    </li>
+    <li>
+      <strong>ACCESS_WIFI_STATE</strong> — Used to read whether Wi-Fi is connected and to display your
+      Wi-Fi network name (SSID) in the App interface.
+    </li>
+    <li>
+      <strong>ACCESS_NETWORK_STATE</strong> — Used to detect network connectivity changes (e.g., stopping
+      the server automatically when Wi-Fi is lost).
+    </li>
+    <li>
+      <strong>FOREGROUND_SERVICE / FOREGROUND_SERVICE_CONNECTED_DEVICE</strong> — Required by Android to
+      keep the FTP/HTTP server running while the screen is off. Android mandates a visible notification when
+      any foreground service is active.
+    </li>
+    <li>
+      <strong>POST_NOTIFICATIONS</strong> (Android 13+) — Required to display the foreground service
+      notification that informs you the server is running.
+    </li>
+    <li>
+      <strong>READ_EXTERNAL_STORAGE</strong> (Android 12 and below) — Required to read files in the folder
+      you select so they can be served over FTP and HTTP.
+    </li>
+    <li>
+      <strong>READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO</strong> (Android 13+) — Granular
+      media permissions that replace READ_EXTERNAL_STORAGE on newer Android versions; used for the same
+      purpose (reading files you choose to share).
+    </li>
+  </ul>
+  <p>The App does not request WRITE_EXTERNAL_STORAGE, location, contacts, camera, or microphone permissions.</p>
+
+  <!-- ── CHILDREN'S PRIVACY ─────────────────────────── -->
+  <h2>8. Children's Privacy</h2>
+  <p>
+    BetterWiFiFTP is not directed at children under the age of 13. The App does not knowingly collect any
+    personal information from children. Because the App collects no personal data from any user, there is no
+    special risk to children's privacy from using this App. If you are a parent or guardian and believe your
+    child has provided personal information through the App, please contact us at the address below and we will
+    address your concern promptly.
+  </p>
+
+  <!-- ── YOUR RIGHTS ─────────────────────────────────── -->
+  <h2>9. Your Rights</h2>
+  <p>
+    Because BetterWiFiFTP does not collect or transmit personal data, there is no data held by us that you would
+    need to request access to, correct, or delete. The only data associated with the App (your server credentials)
+    is stored locally on your device and is fully under your control:
+  </p>
+  <ul>
+    <li>You can change your username or password at any time within the App.</li>
+    <li>Uninstalling the App removes all locally stored data (SharedPreferences) from your device.</li>
+  </ul>
+  <p>
+    If you are located in the European Economic Area (EEA), United Kingdom, or California, the above means that
+    we have no personal data about you to process, and therefore the obligations under GDPR, UK GDPR, and CCPA
+    that relate to data we hold do not apply. You retain full control over everything on your own device.
+  </p>
+
+  <!-- ── CHANGES ─────────────────────────────────────── -->
+  <h2>10. Changes to This Privacy Policy</h2>
+  <p>
+    We may update this Privacy Policy from time to time. When we do, we will revise the "Effective Date" at the
+    top of this page. We encourage you to review this Privacy Policy periodically. Continued use of the App after
+    changes are posted constitutes your acceptance of the updated policy.
+  </p>
+  <p>
+    Any future version of the App that introduces data collection (such as crash reporting or analytics) will be
+    accompanied by an updated Privacy Policy that discloses those changes before they take effect.
+  </p>
+
+  <!-- ── CONTACT ──────────────────────────────────────── -->
+  <h2>11. Contact Us</h2>
+  <p>
+    If you have any questions or concerns about this Privacy Policy or the App's data practices, please contact us:
+  </p>
+  <ul>
+    <li><strong>Developer:</strong> SM Habib Jr</li>
+    <li><strong>Email:</strong> <a href="mailto:smhabib.abir2030@gmail.com">smhabib.abir2030@gmail.com</a></li>
+  </ul>
+
+  <footer>
+    <p>BetterWiFiFTP &nbsp;&mdash;&nbsp; Privacy Policy &nbsp;&mdash;&nbsp; Effective May 31, 2026</p>
+    <p style="margin-top:6px;">This policy accurately reflects the App's behavior as of the effective date above.</p>
+  </footer>
+
+</div>
+</body>
+</html>

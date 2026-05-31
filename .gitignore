@@ -1,15 +1,44 @@
+# ── Gradle ──────────────────────────────────────────────────────
+.gradle/
+/build/
+/app/build/
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# ── Android build outputs ───────────────────────────────────────
+/app/release/
+*.apk
+*.aab
+*.aar
+
+# ── IDE — IntelliJ / Android Studio ────────────────────────────
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+*.iws
+*.ipr
+
+# ── Kotlin ──────────────────────────────────────────────────────
+.kotlin/
+
+# ── Native build ────────────────────────────────────────────────
+.externalNativeBuild/
+.cxx/
+
+# ── Local environment (never commit SDK paths) ──────────────────
 local.properties
+
+# ── Signing / secrets ───────────────────────────────────────────
+*.keystore
+*.jks
+*.pem
+*.key
+keystore.properties
+
+# ── macOS ───────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+
+# ── Android captures ────────────────────────────────────────────
+/captures/
+lint-results*.xml
