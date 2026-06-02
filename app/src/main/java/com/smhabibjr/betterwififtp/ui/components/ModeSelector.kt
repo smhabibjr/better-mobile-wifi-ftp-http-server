@@ -50,7 +50,6 @@ fun ModeSelector(mode: AccessMode, onChange: (AccessMode) -> Unit) {
     ) {
         ModeOption(
             modifier = Modifier.weight(1f),
-            id = AccessMode.ReadOnly,
             title = "Read only",
             subtitle = "Clients can only download",
             icon = Icons.Rounded.ArrowDownward,
@@ -60,7 +59,6 @@ fun ModeSelector(mode: AccessMode, onChange: (AccessMode) -> Unit) {
         )
         ModeOption(
             modifier = Modifier.weight(1f),
-            id = AccessMode.ReadWrite,
             title = "Read + Write",
             subtitle = "Clients can upload + edit",
             icon = Icons.Rounded.ArrowUpward,
@@ -74,7 +72,6 @@ fun ModeSelector(mode: AccessMode, onChange: (AccessMode) -> Unit) {
 @Composable
 private fun ModeOption(
     modifier: Modifier = Modifier,
-    id: AccessMode,
     title: String,
     subtitle: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,

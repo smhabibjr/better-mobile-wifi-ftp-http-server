@@ -125,13 +125,12 @@ class FileHttpServer(
                 when {
                     file.isDirectory -> out.write(directoryListing(file, decodedPath))
                     file.isFile -> {
-                        val bytes = file.readBytes()
                         val header = "HTTP/1.0 200 OK\r\n" +
                             "Content-Type: application/octet-stream\r\n" +
                             "Content-Disposition: attachment; filename=\"${file.name}\"\r\n" +
-                            "Content-Length: ${bytes.size}\r\n\r\n"
+                            "Content-Length: ${file.length()}\r\n\r\n"
                         out.write(header.toByteArray())
-                        out.write(bytes)
+                        file.inputStream().use { it.copyTo(out) }
                     }
                     else -> out.write(response404(decodedPath))
                 }

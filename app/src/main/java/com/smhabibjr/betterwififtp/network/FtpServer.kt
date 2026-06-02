@@ -262,11 +262,8 @@ class FtpServer(
                                     send(150, "Opening data connection")
                                     try {
                                         conn.use { dc ->
-                                            if (upperCmd == "APPE") {
-                                                f.outputStream().also { it.channel }.use { dc.inputStream.copyTo(it) }
-                                            } else {
-                                                f.outputStream().use { dc.inputStream.copyTo(it) }
-                                            }
+                                            val append = upperCmd == "APPE"
+                                            java.io.FileOutputStream(f, append).use { dc.inputStream.copyTo(it) }
                                         }
                                         send(226, "Transfer complete")
                                     } catch (_: Exception) { send(426, "Transfer aborted") }
