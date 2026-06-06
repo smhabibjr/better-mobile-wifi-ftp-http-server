@@ -20,8 +20,12 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -274,7 +278,9 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
             visible = banner != null,
             enter = slideInVertically(tween(280)) { -it } + fadeIn(tween(220)),
             exit = slideOutVertically(tween(220)) { -it } + fadeOut(tween(160)),
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = 64.dp),
+            modifier = Modifier.align(Alignment.TopCenter)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(top = 8.dp),
         ) {
             banner?.let { BannerOverlay(it, onClose = { banner = null }) }
         }
@@ -284,7 +290,9 @@ fun WifiFtpApp(modifier: Modifier = Modifier) {
             visible = toast != null,
             enter = slideInVertically(tween(240)) { it / 2 } + fadeIn(tween(200)),
             exit = slideOutVertically(tween(180)) { it / 2 } + fadeOut(tween(140)),
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp),
+            modifier = Modifier.align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(bottom = 16.dp),
         ) {
             toast?.let { ToastOverlay(it) }
         }

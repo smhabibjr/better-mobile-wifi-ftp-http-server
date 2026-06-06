@@ -1,4 +1,11 @@
 # Add project specific ProGuard rules here.
+
+# Keep all app classes to prevent R8 from stripping reflection-accessed code
+-keep class com.smhabibjr.betterwififtp.** { *; }
+
+# Preserve line numbers in stack traces for easier debugging
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
 #
