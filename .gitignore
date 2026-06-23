@@ -42,3 +42,6 @@ keystore.properties
 # ── Android captures ────────────────────────────────────────────
 /captures/
 lint-results*.xml
+
+# ── Claude Code ─────────────────────────────────────────────────
+.claude/
